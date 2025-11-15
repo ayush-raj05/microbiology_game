@@ -3,674 +3,701 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Microbe Battle — Mobile Friendly Edition</title>
+<title>Microbe Identification — Classroom Edition</title>
 <style>
   :root{
-    --bg1:#040917; --bg2:#07132a; --panel:#082437; --neon-cyan:#00f0ff;
-    --neon-mag:#ff4dd2; --neon-lime:#7ef27e; --muted:#9fbfd8;
+    --bg:#061025; --panel:#09233a; --accent:#06d6a0; --muted:#9fbfd8; --txt:#e6fbff;
     --glass: rgba(255,255,255,0.03);
-    --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  [data-theme="light"]{
+    --bg:#f3f7fb; --panel:#ffffff; --accent:#0b8457; --muted:#415566; --txt:#072236;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:var(--font-sans);background:
-    radial-gradient(800px 400px at 10% 10%, rgba(0,240,255,0.02), transparent 8%),
-    radial-gradient(600px 300px at 90% 90%, rgba(255,77,210,0.02), transparent 8%),
-    linear-gradient(180deg,var(--bg1),var(--bg2));color:#dff6ff;-webkit-tap-highlight-color:transparent}
-  .wrap{max-width:1160px;margin:18px auto;padding:16px}
-  header{display:flex;align-items:center;gap:14px}
-  h1{margin:0;font-size:22px;letter-spacing:0.3px}
-  .top{display:flex;gap:12px;align-items:flex-start;margin-top:12px;flex-wrap:wrap}
-  .panel{background:linear-gradient(180deg,var(--panel),#062b3e);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);min-width:200px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#07132a);color:var(--txt)}
+  .wrap{max-width:1100px;margin:12px auto;padding:12px}
+  header{display:flex;gap:12px;align-items:center}
+  h1{margin:0;font-size:20px}
+  .top{display:flex;gap:12px;margin-top:12px;align-items:flex-start;flex-wrap:wrap}
+  .panel{background:linear-gradient(180deg,var(--panel),#062b3e);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,0.45)}
   .small{font-size:13px;color:var(--muted)}
-  .controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-  button{background:var(--neon-cyan);border:none;padding:10px 14px;border-radius:10px;color:#02101a;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,240,255,0.06);touch-action:manipulation}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:#e6fbff}
-  #gameArea{background:linear-gradient(180deg,#071b2b,#04161f);border-radius:12px;margin-top:12px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,0.7);position:relative;overflow:hidden}
+  button{background:var(--accent);border:none;padding:10px 12px;border-radius:10px;color:#02101a;font-weight:800;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--txt);font-weight:700}
+  #gameArea{background:linear-gradient(180deg,#071b2b,#04161f);border-radius:12px;margin-top:12px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);position:relative;overflow:hidden}
   canvas{width:100%;height:auto;border-radius:10px;display:block;background:transparent;touch-action:none}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .hud{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
   .stat{display:flex;flex-direction:column}
   .label{font-size:12px;color:var(--muted)}
   .value{font-weight:900;font-size:18px}
-  .mut-box{display:flex;gap:8px;align-items:center}
-  .touch-controls{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:12px;gap:8px;z-index:40}
-  .touch-controls button{width:56px;height:56px;border-radius:999px;background:rgba(255,255,255,0.03);color:#dff6ff;font-size:22px;border:1px solid rgba(255,255,255,0.04);display:grid;place-items:center}
-  @media (max-width:780px){
-    .touch-controls{display:flex}
-    .panel{min-width:unset}
-    .top{flex-direction:column}
-  }
-  .banner {
-    position: absolute; left:50%; transform:translateX(-50%); top:10%;
-    padding:10px 18px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-    color:var(--neon-cyan);font-weight:900;letter-spacing:0.5px;border:1px solid rgba(0,240,255,0.12);
-    text-shadow:0 6px 28px rgba(0,240,255,0.06);pointer-events:none;z-index:60;backdrop-filter:blur(4px);display:none;
-  }
-  .popup-modal {
-    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 360px; z-index:120;
-    background: linear-gradient(180deg, rgba(6,18,34,0.96), rgba(6,18,34,0.98)); border-radius:12px; padding:14px;
-    border:1px solid rgba(255,255,255,0.04); box-shadow: 0 30px 80px rgba(0,0,0,0.7); display:none;
-  }
-  .popup-modal h3{margin:0 0 8px}
-  .popup-modal p{margin:0;color:var(--muted)}
-  .popup-choices{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-  .btn-answer{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6fbff;cursor:pointer}
-  /* small D-pad layout adjustment */
-  .dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;align-items:center;justify-items:center}
-  .dpad .placeholder{visibility:hidden}
-  .mobile-actions{display:flex;gap:8px;align-items:center}
+  .banner{position:absolute;left:50%;transform:translateX(-50%);top:8%;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--accent);font-weight:900;display:none;z-index:60}
+  .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:92%;max-width:520px;background:var(--panel);padding:16px;border-radius:12px;display:none;z-index:120}
+  .row{display:flex;gap:8px;align-items:center}
+  .progressBar{height:12px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden}
+  .progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#7ef27e)}
+  .dpad{display:none;position:fixed;left:12px;bottom:12px;z-index:150}
+  .dpad button{width:56px;height:56px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--txt);font-size:18px;border:1px solid rgba(255,255,255,0.04)}
+  @media (max-width:800px){ .dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px} }
+  .badge{display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700}
+  .enc-list{max-height:300px;overflow:auto}
+  .small-center{font-size:13px;text-align:center;color:var(--muted)}
+  .flexcol{display:flex;flex-direction:column;gap:8px}
+  .switch{display:inline-flex;align-items:center;gap:8px}
+  /* subtle animations */
+  .pulse{animation:pulse 1500ms ease-in-out infinite;opacity:0.95}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
 </style>
 </head>
-<body>
+<body data-theme="dark">
 <div class="wrap">
   <header>
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,#00f0ff,#ff4dd2);display:grid;place-items:center;font-weight:900;color:#02101a">MB</div>
-      <div>
-        <h1>🧬 Microbe Battle — Mobile Friendly</h1>
-        <div class="small">Collect nutrients • Avoid antibiotics • Evolve traits • In-game quiz</div>
-      </div>
+    <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,#00f0ff,#ff4dd2);display:grid;place-items:center;font-weight:900;color:#02101a">MB</div>
+    <div>
+      <h1>Microbe Identification — Classroom Edition</h1>
+      <div class="small">Identify microbes • Score & upgrades • Quiz pauses game • Encyclopedia & badges</div>
+    </div>
+    <div style="margin-left:auto" class="row">
+      <div class="switch small"><label for="themeToggle" class="small">Light</label><input id="themeToggle" type="checkbox"></div>
+      <button id="openEnc" class="ghost">Encyclopedia</button>
     </div>
   </header>
 
+  <!-- Start screen modal -->
+  <div id="startModal" class="modal" style="display:block">
+    <h2 style="margin:0">Welcome — Microbe ID Game</h2>
+    <p class="small">Learn to recognize microbes visually. The game pauses for questions and upgrades difficulty as your score rises. Play & show this to your teacher.</p>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="playBtn">Play Game ▶</button>
+      <button id="howBtn" class="ghost">How to play</button>
+      <button id="demoBtn" class="ghost">Demo mode</button>
+      <button id="resetBadges" class="ghost">Reset badges</button>
+    </div>
+    <div style="margin-top:12px" class="small">
+      <div>Features: Start screen • Timer • Progress bar • Pause on question • Encyclopedia • Badges</div>
+      <div style="margin-top:8px">Tip: On mobile tap the canvas to move, or use the bottom D-pad on small screens.</div>
+    </div>
+  </div>
+
+  <!-- How to play modal -->
+  <div id="howModal" class="modal">
+    <h3 style="margin:0">How to play — (simple)</h3>
+    <div class="small" style="margin-top:8px;text-align:left">
+      <ol>
+        <li>Press <strong>Play Game</strong>. A microbe drawing will appear.</li>
+        <li>Choose one of the three answer buttons; the game will tell you if correct.</li>
+        <li>When a question appears the main animation pauses automatically — take time to answer.</li>
+        <li>Score increases and difficulty upgrades from <em>Easy → Medium → Hard</em>.</li>
+        <li>Use the encyclopedia (button at top) to learn more about microbes anytime.</li>
+      </ol>
+    </div>
+    <div style="text-align:right;margin-top:8px"><button id="closeHow" class="ghost">Close</button></div>
+  </div>
+
+  <!-- Main UI -->
   <div class="top" style="align-items:flex-start">
     <div class="panel" style="flex:1">
       <div class="hud">
-        <div class="stat"><div class="label">Score</div><div id="score" class="value">0</div></div>
-        <div class="stat"><div class="label">Health</div><div id="healthDisplay" class="value">❤️❤️❤️❤️❤️</div></div>
-        <div class="stat"><div class="label">Streak</div><div id="streak" class="value">0</div></div>
-        <div class="stat"><div class="label">Stage</div><div id="stageName" class="value">Proto-cell</div></div>
-        <div style="margin-left:auto" class="small">Mode: <strong style="color:var(--neon-lime)">Moderate</strong></div>
+        <div class="stat"><div class="label">Score</div><div id="scoreVal" class="value">0</div></div>
+        <div class="stat"><div class="label">Health</div><div id="healthVal" class="value">❤❤❤</div></div>
+        <div class="stat"><div class="label">Stage</div><div id="stageVal" class="value">Beginner</div></div>
+        <div style="margin-left:auto" class="small">Mode: <strong id="modeLabel">Moderate</strong></div>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:10px;align-items:center" class="mobile-actions">
-        <button id="startBtn">Start</button>
-        <button id="pauseBtn" class="ghost">Pause</button>
-        <button id="resetBtn" class="ghost">Reset</button>
-        <button id="hintBtn" class="ghost" title="Tap & drag the canvas to move">How to play</button>
+      <div id="gameArea" style="margin-top:10px">
+        <canvas id="playCanvas" width="960" height="520" aria-label="Microbe play area"></canvas>
+        <div id="mutBanner" class="banner">Mutation Achieved!</div>
       </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <div class="controls">
+          <button id="startBtn2">Start / Resume</button>
+          <button id="pauseBtn" class="ghost">Pause</button>
+          <button id="resetBtn" class="ghost">Reset</button>
+          <button id="toggleMusic" class="ghost">Sound: On</button>
+        </div>
+        <div style="margin-left:auto;width:320px">
+          <div class="progressBar" aria-hidden="true"><div id="progressFill" class="progressFill"></div></div>
+          <div class="small small-center" style="margin-top:6px"><span id="progressText">0 / 10</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1">
+          <div id="questionBox" class="panel" style="background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:10px">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="flex:1">
+                <div id="questionTitle" class="small">Question will appear here</div>
+                <div id="questionText" style="font-weight:800;font-size:16px;margin-top:6px">—</div>
+              </div>
+              <div style="width:220px">
+                <div class="small">Time left:</div>
+                <div class="progressBar" style="height:10px"><div id="timerFill" class="progressFill" style="background:#ffb66b;width:100%"></div></div>
+              </div>
+            </div>
+            <div style="margin-top:10px" id="answersArea"></div>
+          </div>
+        </div>
+        <div style="max-width:320px">
+          <div class="panel">
+            <div class="small">Badges earned</div>
+            <div id="badges" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"></div>
+            <div style="margin-top:10px" class="small">Achievements unlock automatically as you score more.</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="panel" style="max-width:360px">
       <div class="small">Powerups & Info</div>
-      <div style="margin-top:8px;font-size:13px">
-        <span style="display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700;margin-right:6px">Shield</span>
-        <span style="display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700;margin-right:6px">Magnet</span>
-        <span style="display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700">Speed</span>
+      <div style="margin-top:8px;font-size:13px" class="flexcol">
+        <div><span class="badge">Shield</span> Blocks 1 hit</div>
+        <div><span class="badge">Magnet</span> Pulls nutrients</div>
+        <div><span class="badge">Speed</span> Move faster</div>
       </div>
-      <div class="small" style="margin-top:10px">Evolution: Flagella = motility; Thick wall = protection; Efflux pumps = expel antibiotics; Biofilm = teamwork; Spore = dormancy.</div>
+
+      <div style="margin-top:12px" class="small">
+        <div><strong>Upgrades:</strong> Score increases upgrade difficulty and add small buffs (speed, health).</div>
+        <hr />
+        <div style="margin-top:8px" class="small">Question behavior: When a quiz pop appears the main animations are paused. Answer to continue.</div>
+      </div>
     </div>
   </div>
 
-  <div id="gameArea" style="position:relative">
-    <canvas id="gameCanvas" width="1160" height="600" aria-label="Microbe battle play area"></canvas>
-    <div id="mutBanner" class="banner">Mutation Achieved!</div>
+  <!-- Encyclopedia modal -->
+  <div id="encModal" class="modal">
+    <h3 style="margin:0">Microbe Encyclopedia</h3>
+    <div class="small" style="margin-top:8px">Click any microbe to see details. This is for students who want to learn more.</div>
+    <div class="enc-list" id="encList" style="margin-top:10px"></div>
+    <div style="text-align:right;margin-top:8px"><button id="closeEnc" class="ghost">Close</button></div>
   </div>
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px">
-    <div class="small">Milestones: 100 → Flagella • 200 → Thick wall • 350 → Efflux pumps • 500 → Biofilm/Spore</div>
-    <div class="small">Quiz: Earn bonus XP every 100 points</div>
+  <!-- Game Over modal -->
+  <div id="gameOver" class="modal">
+    <h2 id="gameOverTitle">Game Over</h2>
+    <div class="small" id="finalStats"></div>
+    <div style="margin-top:12px"><button id="playAgain" class="ghost">Play Again</button> <button id="closeOver" class="ghost">Close</button></div>
   </div>
-</div>
 
-<!-- D-pad / touch controls (mobile) -->
-<div class="touch-controls" id="touchControls" aria-hidden="true">
-  <!-- D-pad -->
-  <div class="dpad" style="grid-auto-flow:column">
-    <button id="btnUp" aria-label="Up">↑</button>
-    <button id="btnLeft" aria-label="Left">←</button>
-    <button id="btnRight" aria-label="Right">→</button>
-    <div class="placeholder"></div>
-    <button id="btnDown" aria-label="Down">↓</button>
-    <button id="btnBoost" aria-label="Boost">⚡</button>
+  <!-- small dpad for mobile -->
+  <div class="dpad" id="dpad">
+    <button id="dpUp">↑</button><button id="dpLeft">←</button><button id="dpRight">→</button>
+    <div class="placeholder"></div><button id="dpDown">↓</button><button id="dpBoost">⚡</button>
   </div>
-</div>
 
-<!-- Quiz Modal -->
-<div id="quizModal" class="popup-modal" role="dialog" aria-modal="true" aria-hidden="true">
-  <h3 id="quizQ">Quiz question</h3>
-  <p id="quizText" class="small">text</p>
-  <div class="popup-choices" id="quizChoices"></div>
-  <div style="text-align:right;margin-top:10px"><button id="closeQuiz" class="ghost">Close</button></div>
 </div>
 
 <script>
-/* Mobile-friendly Microbe Battle
-   - Touch drag/tap to move on canvas
-   - On-screen D-pad for small screens
-   - Keyboard still supported on laptop
+/* ========= GAME: single-file classroom-ready =========
+   Features included:
+   - Start screen, How to play, Encyclopedia
+   - Score-based upgrades: easy -> medium -> hard
+   - Pause automatically when question appears; manual pause
+   - Timer per question + toggleable sound
+   - Progress bar and badges
+   - Programmatic microbe "images" (drawn on canvas)
+   - Mobile touch support + simple D-pad
+   - All data bundled — no external images required
 */
 
-/* Canvas setup */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let W = canvas.width, H = canvas.height;
+/* ------------------- CONFIG ------------------- */
+const TOTAL_QUESTIONS = 10;
+const QUESTION_TIME_SEC = 20; // per question
+const SOUND_ON_DEFAULT = true;
 
-/* Resize utility - responsive + high-dpi backing store */
-function doResize(){
-  const maxW = 1160;
-  const minW = 360;
-  const cssW = Math.max(minW, Math.min(window.innerWidth - 32, maxW));
-  const cssH = Math.max(320, Math.floor(cssW * 0.52));
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-  const ratio = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = Math.floor(cssW * ratio);
-  canvas.height = Math.floor(cssH * ratio);
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  W = cssW; H = cssH;
-}
-window.addEventListener('resize', doResize);
-doResize();
-
-/* Settings and state */
-const SETTINGS = {
-  tickMs: 16,
-  microbeRadius: 26,
-  baseSpeed: 3.8,
-  spawnChance: { nutrient: 0.018, antibiotic: 0.01, powerup: 0.0018 },
-  bossIntervalMs: 45000,
-  maxParticles: 120
+/* ------------------- STATE ------------------- */
+let state = {
+  running:false, paused:false,
+  score:0, health:3, questionIndex:0, shield:false,
+  currentQuestion:null, timerRemain: QUESTION_TIME_SEC,
+  badges:new Set(), soundOn:SOUND_ON_DEFAULT, theme:'dark'
 };
 
-const MUTATIONS = [
-  { name:"Proto-cell", color:"#4fd3e6", info:"Basic cell with no special defenses." },
-  { name:"Flagella Formation", color:"#7bf27e", info:"Flagella enable motility—move faster toward nutrients (chemotaxis)." },
-  { name:"Cell Wall Thickening", color:"#ffd166", info:"Thicker wall increases protection against antibiotics." },
-  { name:"Efflux Pump Activation", color:"#b48cff", info:"Efflux pumps help expel harmful compounds like antibiotics." },
-  { name:"Biofilm Formation", color:"#ff8fab", info:"Biofilms provide community-level protection and nutrient retention." },
-  { name:"Spore Formation", color:"#ffb74d", info:"Dormant spores survive harsh conditions." }
+/* ------------------- Data: sample microbes (easy/medium/hard) -------------------
+   Each microbe has id, name, level, short description, drawing parameters.
+   For classroom you can extend this list or replace with real photos later.
+*/
+const MICROBES = [
+  { id:'ecoli', name:'E. coli', level:'easy', desc:'Common rod-shaped bacterium often found in intestines.', color:'#7ef27e', features:{shape:'rod', spots:false, flagella:false} },
+  { id:'s_cerevisiae', name:'Yeast (S.cerevisiae)', level:'easy', desc:'Round budding yeast used in baking.', color:'#ffd166', features:{shape:'coccus', budding:true} },
+  { id:'aspergillus', name:'Aspergillus (mould)', level:'easy', desc:'Fuzzy mould with radiating spore heads.', color:'#ff8fab', features:{shape:'filament', spores:true} },
+  { id:'staphylococcus', name:'Staphylococcus', level:'medium', desc:'Cluster-forming spherical bacteria (grape-like).', color:'#b48cff', features:{shape:'coccus', clusters:true} },
+  { id:'streptococcus', name:'Streptococcus', level:'medium', desc:'Chain-forming spherical bacteria often seen in throat infections.', color:'#7fd3ff', features:{shape:'coccus', chain:true} },
+  { id:'penicillium', name:'Penicillium', level:'medium', desc:'Green mould with brush-like conidiophores.', color:'#a7ffb7', features:{shape:'filament', spores:true} },
+  { id:'mycobacterium', name:'Mycobacterium', level:'hard', desc:'Acid-fast rod-shaped bacteria (e.g., TB).', color:'#ffb74d', features:{shape:'rod', waxy:true} },
+  { id:'v_virus', name:'Virus (enveloped)', level:'hard', desc:'Tiny viral particle with an envelope and spikes.', color:'#ff6b6b', features:{shape:'sphere', spikes:true} },
+  { id:'plasmodium', name:'Plasmodium', level:'hard', desc:'Protozoan parasite; complex life cycle inside cells.', color:'#c0b3ff', features:{shape:'irregular', intracellular:true} }
 ];
 
-let state = {
-  running: false, paused: false,
-  score: 0, streak: 0, comboMult: 1,
-  health: 5, mutationStage: 0,
-  microbe: { x: W/2, y: H/2, r: SETTINGS.microbeRadius, speed: SETTINGS.baseSpeed, trail: [], shieldActive:false, magnetActive:false, speedMult:1 },
-  nutrients: [], antibiotics: [], powerups: [], particles: [], boss: null,
-  lastBossAt: performance.now(), frame: 0, quizActive: false
+/* Build question pools grouped by level */
+const QUESTIONS = {
+  easy: MICROBES.filter(m=>m.level==='easy'),
+  medium: MICROBES.filter(m=>m.level==='medium'),
+  hard: MICROBES.filter(m=>m.level==='hard')
 };
 
-/* Audio (user gesture required) */
+/* Keep used questions to avoid repeats */
+let usedQuestionIds = new Set();
+
+/* ------------------- UI Elements ------------------- */
+const playCanvas = document.getElementById('playCanvas');
+const ctx = playCanvas.getContext('2d');
+const scoreVal = document.getElementById('scoreVal');
+const healthVal = document.getElementById('healthVal');
+const stageVal = document.getElementById('stageVal');
+const startModal = document.getElementById('startModal');
+const playBtn = document.getElementById('playBtn');
+const demoBtn = document.getElementById('demoBtn');
+const howBtn = document.getElementById('howBtn');
+const howModal = document.getElementById('howModal');
+const closeHow = document.getElementById('closeHow');
+const mutBanner = document.getElementById('mutBanner');
+const questionTitle = document.getElementById('questionTitle');
+const questionText = document.getElementById('questionText');
+const answersArea = document.getElementById('answersArea');
+const timerFill = document.getElementById('timerFill');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const answersPanel = document.getElementById('questionBox');
+const startBtn2 = document.getElementById('startBtn2');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const toggleMusic = document.getElementById('toggleMusic');
+const encModal = document.getElementById('encModal');
+const openEnc = document.getElementById('openEnc');
+const encList = document.getElementById('encList');
+const closeEnc = document.getElementById('closeEnc');
+const badgesDiv = document.getElementById('badges');
+const gameOver = document.getElementById('gameOver');
+const gameOverTitle = document.getElementById('gameOverTitle');
+const finalStats = document.getElementById('finalStats');
+const playAgain = document.getElementById('playAgain');
+const closeOver = document.getElementById('closeOver');
+const resetBadges = document.getElementById('resetBadges');
+const themeToggle = document.getElementById('themeToggle');
+const dpad = document.getElementById('dpad');
+const dpUp=document.getElementById('dpUp'), dpLeft=document.getElementById('dpLeft'), dpRight=document.getElementById('dpRight'), dpDown=document.getElementById('dpDown'), dpBoost=document.getElementById('dpBoost');
+
+/* Audio */
 let audioCtx = null;
-function ensureAudio(){
-  if(!audioCtx){
-    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
-  }
-}
-function beep(freq=440, time=0.08, type='sine', gainVal=0.04){
-  if(!audioCtx) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  g.gain.setValueAtTime(gainVal, audioCtx.currentTime);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime + time);
-}
-function blast(freq=150, time=0.18){
-  if(!audioCtx) return;
-  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-  o.type='sawtooth'; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + time);
-  o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + time);
-}
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; } } }
+function playTone(freq,dur=0.08,type='sine',gain=0.04){ if(!audioCtx || !state.soundOn) return; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type=type; o.frequency.setValueAtTime(freq,audioCtx.currentTime); g.gain.setValueAtTime(gain,audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur); }
+function playCorrect(){ playTone(880,0.06,'sine',0.06); }
+function playWrong(){ playTone(220,0.12,'sawtooth',0.08); }
+function playClick(){ playTone(660,0.04,'triangle',0.03); }
 
-/* Utilities */
+/* Responsive canvas backing */
+function resizeCanvas(){
+  const maxW = Math.min(1000, window.innerWidth - 48);
+  const cssW = Math.max(360, maxW);
+  const cssH = Math.max(300, Math.floor(cssW * 0.54));
+  playCanvas.style.width = cssW + 'px';
+  playCanvas.style.height = cssH + 'px';
+  const ratio = window.devicePixelRatio || 1;
+  playCanvas.width = Math.floor(cssW * ratio);
+  playCanvas.height = Math.floor(cssH * ratio);
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/* ------------------- Utility ------------------- */
 function rand(min,max){ return Math.random()*(max-min)+min; }
-function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
-function heartString(n){ return "❤️".repeat(Math.max(0,n)); }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 
-/* Spawn functions */
-function spawnNutrient(){
-  state.nutrients.push({ x: rand(24, W-24), y: rand(28, H-28), r: 10, wobble: rand(0,Math.PI*2), value: 10 });
+/* ------------------- Difficulty engine ------------------- */
+function difficultyForScore(s){
+  if(s <= 3) return 'easy';
+  if(s <= 7) return 'medium';
+  return 'hard';
 }
-function spawnAntibiotic(x=null, y=null, vx=0, vy=rand(1.2,3.0)){
-  const px = (x===null)? rand(24, W-24) : x;
-  const py = (y===null)? -20 : y;
-  state.antibiotics.push({ x: px, y: py, r: 14, vx, vy, rot: rand(0,Math.PI*2), harm: 1 });
-}
-function spawnPowerup(){
-  const types = ['shield','magnet','speed'];
-  const t = types[Math.floor(Math.random()*types.length)];
-  state.powerups.push({ x: rand(40, W-40), y: rand(40, H-40), r: 14, type: t, ttl: 16*60 });
+function stageLabel(){
+  const s = difficultyForScore(state.score);
+  if(s==='easy') return 'Beginner';
+  if(s==='medium') return 'Intermediate';
+  return 'Advanced';
 }
 
-/* Particles */
-function spawnParticle(x,y,text,color="#00f0ff",life=50){
-  if(state.particles.length >= SETTINGS.maxParticles) state.particles.shift();
-  state.particles.push({ x,y, vx: rand(-0.6,0.6), vy: rand(-1.2,-0.4), life, text, color });
+/* ------------------- Question generator ------------------- */
+function pickQuestion(){
+  const level = difficultyForScore(state.score);
+  const pool = QUESTIONS[level].filter(q=>!usedQuestionIds.has(q.id));
+  if(pool.length === 0){
+    // if pool exhausted, allow any unused
+    const all = [].concat(...Object.values(QUESTIONS)).filter(q=>!usedQuestionIds.has(q.id));
+    if(all.length===0) return null;
+    return all[Math.floor(Math.random()*all.length)];
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
 }
 
-/* Draw helpers */
-function roundRect(ctx, x, y, w, h, r, fill, stroke){
-  if (r === undefined) r = 6;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-  if(fill) ctx.fill();
-  if(stroke) ctx.stroke();
-}
-
-/* Draw neon grid */
-function drawNeonGrid(){
-  const spacing = 48;
+/* ------------------- Drawing microbe (programmatic) ------------------- */
+function drawMicrobePreview(m, x, y, size=120, rotation=0){
+  // m: microbe object with features
   ctx.save();
-  ctx.globalAlpha = 0.06;
-  ctx.strokeStyle = "#00f0ff";
-  ctx.lineWidth = 0.8;
-  for(let x = - (state.frame % spacing); x < W + spacing; x += spacing){
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-  }
-  for(let y = - (state.frame % spacing); y < H + spacing; y += spacing){
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-/* Draw entities */
-function drawMicrobe(m){
-  // trail
-  for(let i=0;i<m.trail.length;i++){
-    const t = m.trail[i];
-    ctx.fillStyle = `rgba(0,255,255,${0.08 * (i/m.trail.length)})`;
-    ctx.beginPath(); ctx.arc(t.x, t.y, m.r * (0.5 * (i/m.trail.length + 0.3)), 0, Math.PI*2); ctx.fill();
-  }
-  // body
-  const stage = MUTATIONS[state.mutationStage];
-  const g = ctx.createRadialGradient(m.x-6, m.y-6, 4, m.x, m.y, m.r*1.8);
-  g.addColorStop(0, "#ffffffcc"); g.addColorStop(0.12, stage.color); g.addColorStop(1, "#072b35");
-  ctx.fillStyle = g;
-  roundRect(ctx, m.x-m.r, m.y-m.r, m.r*2, m.r*2, m.r*0.6, true, false);
-  // eyes/mouth
-  ctx.fillStyle = "#021017"; ctx.beginPath(); ctx.ellipse(m.x-6, m.y-6, 4,5,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(m.x-5, m.y-8, 1.2,1.6,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#021017"; ctx.beginPath(); ctx.ellipse(m.x+8, m.y-6, 3.5,4,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(m.x+9, m.y-7, 1.0,1.2,0,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.arc(m.x+2, m.y+4, 6, 0.2*Math.PI, 0.8*Math.PI); ctx.stroke();
-  // shield aura
-  if(m.shieldActive){
-    ctx.strokeStyle = "rgba(127,255,180,0.7)"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(m.x, m.y, m.r+8, 0, Math.PI*2); ctx.stroke();
-  }
-}
-function drawNutrient(n){
-  ctx.save(); ctx.translate(n.x, n.y); n.wobble += 0.06;
-  const gg = ctx.createRadialGradient(0,0,0,0,0,28); gg.addColorStop(0,"rgba(126,242,126,0.18)"); gg.addColorStop(1,"rgba(126,242,126,0)");
-  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#3fe65a"; ctx.beginPath(); ctx.arc(0,0,n.r,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#eaffef"; ctx.beginPath(); ctx.ellipse(-4,-4,n.r*0.45,n.r*0.65,-0.5,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-}
-function drawAntibiotic(a){
-  ctx.save(); ctx.translate(a.x, a.y); a.rot += 0.06; ctx.rotate(a.rot);
-  ctx.fillStyle = "#ff6b6b"; roundRect(ctx, -a.r, -a.r*0.7, a.r*2, a.r*1.4, a.r*0.6, true, false);
-  ctx.fillStyle = "rgba(255,255,255,0.14)"; ctx.fillRect(-a.r*0.7, -a.r*0.3, a.r*1.4, a.r*0.23); ctx.restore();
-}
-function drawPowerup(p){
-  ctx.save(); ctx.translate(p.x,p.y);
-  const cols = {shield:"#6be3ff",magnet:"#ffb8ff",speed:"#ffe37a"};
-  ctx.fillStyle = cols[p.type] || "#fff"; ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle = "#021018"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center"; ctx.fillText(p.type[0].toUpperCase(), 0, 4);
-  ctx.restore();
-}
-
-/* Render function */
-function renderScene(){
-  ctx.clearRect(0,0,W,H);
-  drawNeonGrid();
-  for(const n of state.nutrients) drawNutrient(n);
-  for(const p of state.powerups) drawPowerup(p);
-  for(const a of state.antibiotics) drawAntibiotic(a);
-  if(state.boss && state.boss.missiles){ for(const m of state.boss.missiles){ ctx.fillStyle="#ff9aa2"; ctx.beginPath(); ctx.arc(m.x,m.y,8,0,Math.PI*2); ctx.fill(); } }
-  drawMicrobe(state.microbe);
-  for(const pt of state.particles){ ctx.globalAlpha = Math.max(0.12, pt.life/60); ctx.fillStyle = pt.color; ctx.font="bold 14px sans-serif"; ctx.fillText(pt.text, pt.x, pt.y); ctx.globalAlpha = 1; }
-}
-
-/* Main loop (requestAnimationFrame) */
-let lastFrameTime = performance.now();
-
-/* Input state */
-const keys = {};
-let touchTarget = null; // {x,y} when user drags/taps canvas on mobile
-let activeDpad = {left:false,right:false,up:false,down:false,boost:false};
-
-function mainLoop(ts){
-  if(!state.running || state.paused){ lastFrameTime = ts; requestAnimationFrame(mainLoop); return; }
-  const dt = ts - lastFrameTime; lastFrameTime = ts;
-  state.frame++;
-
-  // spawn items
-  if(Math.random() < SETTINGS.spawnChance.nutrient) spawnNutrient();
-  if(Math.random() < SETTINGS.spawnChance.antibiotic) spawnAntibiotic();
-  if(Math.random() < SETTINGS.spawnChance.powerup) spawnPowerup();
-
-  // boss spawn
-  if(performance.now() - state.lastBossAt > SETTINGS.bossIntervalMs){
-    spawnBoss(); state.lastBossAt = performance.now();
-  }
-
-  // update antibiotics
-  for(let i=state.antibiotics.length-1;i>=0;i--){
-    const a = state.antibiotics[i];
-    a.x += a.vx * (dt/16); a.y += a.vy * (dt/16);
-    if(a.y - a.r > H + 80 || a.x < -100 || a.x > W + 100) state.antibiotics.splice(i,1);
-  }
-
-  // update powerups TTL
-  for(let i=state.powerups.length-1;i>=0;i--){
-    const p = state.powerups[i];
-    p.ttl--; if(p.ttl <= 0) state.powerups.splice(i,1);
-  }
-
-  // movement: keyboard + dpad + touchTarget
-  const baseSpeed = state.microbe.speed * (state.microbe.speedMult || 1);
-  let dx=0, dy=0;
-
-  // keyboard
-  if(keys['ArrowLeft']||keys['a']) dx -= 1;
-  if(keys['ArrowRight']||keys['d']) dx += 1;
-  if(keys['ArrowUp']||keys['w']) dy -= 1;
-  if(keys['ArrowDown']||keys['s']) dy += 1;
-
-  // dpad
-  if(activeDpad.left) dx -= 1;
-  if(activeDpad.right) dx += 1;
-  if(activeDpad.up) dy -= 1;
-  if(activeDpad.down) dy += 1;
-  if(activeDpad.boost) state.microbe.speedMult = 2.2;
-  else state.microbe.speedMult = Math.max(1, 1 + 0.08 * state.mutationStage);
-
-  // touch target (pointer drag/tap) moves microbe toward touch point
-  if(touchTarget){
-    const tx = touchTarget.x, ty = touchTarget.y;
-    const vx = tx - state.microbe.x, vy = ty - state.microbe.y;
-    const d = Math.hypot(vx,vy) || 1;
-    // move proportionally toward target, but also allow keyboard/dpad to override
-    const moveSpeed = baseSpeed * (dt/16);
-    state.microbe.x += (vx/d) * moveSpeed;
-    state.microbe.y += (vy/d) * moveSpeed;
+  ctx.translate(x,y);
+  ctx.rotate(rotation);
+  // background halo
+  ctx.beginPath();
+  ctx.fillStyle = hexToRgba(m.color,0.14);
+  ctx.arc(0,0,size*0.52,0,Math.PI*2); ctx.fill();
+  // body shapes
+  if(m.features.shape==='rod'){
+    // rod
+    ctx.beginPath(); roundRect(ctx,-size*0.4,-size*0.2,size*0.8,size*0.4,size*0.18,true,false);
+    ctx.fillStyle = m.color; ctx.fill();
+  } else if(m.features.shape==='coccus'){
+    // sphere
+    ctx.beginPath(); ctx.arc(0,0,size*0.28,0,Math.PI*2); ctx.fillStyle=m.color; ctx.fill();
+    // clusters or chain
+    if(m.features.clusters){
+      for(let i=0;i<4;i++){ ctx.beginPath(); ctx.arc(Math.cos(i*1.6)*size*0.32, Math.sin(i*1.6)*size*0.28, size*0.18,0,Math.PI*2); ctx.fill(); }
+    }
+    if(m.features.chain){
+      for(let i=-2;i<=2;i++){ ctx.beginPath(); ctx.arc(i*size*0.31,0,size*0.16,0,Math.PI*2); ctx.fill(); }
+    }
+  } else if(m.features.shape==='filament'){
+    // filament brush
+    for(let i=-3;i<6;i++){
+      ctx.beginPath(); ctx.moveTo(-size*0.5 + i*size*0.14, -size*0.02); ctx.lineTo(-size*0.3 + i*size*0.14, -size*0.3); ctx.lineTo(-size*0.2 + i*size*0.14, -size*0.02);
+      ctx.closePath(); ctx.fillStyle = m.color; ctx.fill();
+    }
   } else {
-    // only keyboard/dpad control
-    const mag = Math.hypot(dx,dy) || 1;
-    state.microbe.x += (dx/mag) * baseSpeed * (dt/16);
-    state.microbe.y += (dy/mag) * baseSpeed * (dt/16);
+    // irregular / protozoan
+    ctx.beginPath(); ctx.ellipse(0,0,size*0.36,size*0.26,0,0,Math.PI*2); ctx.fillStyle=m.color; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(size*0.12,-size*0.06,size*0.10,size*0.06,0,0,Math.PI*2); ctx.fillStyle=hexToRgba('#000',0.12); ctx.fill();
+  }
+  // spikes
+  if(m.features.spikes){
+    ctx.strokeStyle = hexToRgba('#000',0.18); ctx.lineWidth=2;
+    for(let a=0;a<12;a++){ const ang = a*(Math.PI*2/12); ctx.beginPath(); ctx.moveTo(Math.cos(ang)*size*0.36,Math.sin(ang)*size*0.36); ctx.lineTo(Math.cos(ang)*size*0.52,Math.sin(ang)*size*0.52); ctx.stroke(); }
+  }
+  // small detail: spots or budding
+  if(m.features.spots || m.features.budding){
+    ctx.fillStyle = hexToRgba('#fff',0.92);
+    ctx.beginPath(); ctx.arc(-size*0.06,-size*0.02,size*0.04,0,Math.PI*2); ctx.fill();
+    if(m.features.budding) { ctx.beginPath(); ctx.arc(size*0.36, -size*0.06, size*0.08,0,Math.PI*2); ctx.fill(); }
+  }
+  ctx.restore();
+}
+function roundRect(ctx,x,y,w,h,r,fill,stroke){ if(r===undefined) r=6; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill) ctx.fill(); if(stroke) ctx.stroke(); }
+function hexToRgba(hex,a){ // basic hex to rgba
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16);
+  const g = parseInt(c.substring(2,4),16);
+  const b = parseInt(c.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ------------------- Render loop (animation) ------------------- */
+let frame = 0;
+let animReq = null;
+function render(){
+  // clear
+  ctx.clearRect(0,0,playCanvas.width,playCanvas.height);
+  frame++;
+  // background subtle grid
+  ctx.save(); ctx.globalAlpha = 0.06; ctx.strokeStyle = '#00f0ff';
+  const spacing = 48;
+  for(let x = - (frame % spacing); x < playCanvas.clientWidth + spacing; x += spacing){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,playCanvas.clientHeight); ctx.stroke(); }
+  for(let y = - (frame % spacing); y < playCanvas.clientHeight + spacing; y += spacing){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(playCanvas.clientWidth,y); ctx.stroke(); }
+  ctx.restore();
+
+  // draw a central animated microbe representing current difficulty
+  const level = difficultyForScore(state.score);
+  const sample = QUESTIONS[level][ Math.floor((frame/80) % QUESTIONS[level].length) ];
+  if(sample){
+    drawMicrobePreview(sample, playCanvas.clientWidth/2, playCanvas.clientHeight/2 - 20, Math.min(playCanvas.clientWidth,420)/3, Math.sin(frame/40)/8);
   }
 
-  // trail
-  state.microbe.trail.unshift({x:state.microbe.x, y:state.microbe.y});
-  if(state.microbe.trail.length > 10) state.microbe.trail.pop();
+  // show small HUD text in canvas area
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('Tap canvas to move / open encyclopedia to learn', 12, playCanvas.clientHeight - 12);
 
-  // clamp
-  state.microbe.x = clamp(state.microbe.x, state.microbe.r, W - state.microbe.r);
-  state.microbe.y = clamp(state.microbe.y, state.microbe.r, H - state.microbe.r);
+  animReq = requestAnimationFrame(render);
+}
 
-  // magnet effect
-  if(state.microbe.magnetActive){
-    for(const n of state.nutrients){
-      const d = Math.hypot(n.x - state.microbe.x, n.y - state.microbe.y);
-      if(d < 160){ n.x += (state.microbe.x - n.x) * 0.06; n.y += (state.microbe.y - n.y) * 0.06; }
+/* Start animation */
+render();
+
+/* ------------------- Questions & quiz flow ------------------- */
+let questionTimerInterval = null;
+
+function startQuestionFlow(){
+  // pick question
+  const q = pickQuestion();
+  if(!q || state.questionIndex >= TOTAL_QUESTIONS){
+    endGame();
+    return;
+  }
+  state.currentQuestion = q;
+  usedQuestionIds.add(q.id);
+  state.questionIndex++;
+  updateProgress();
+  state.timerRemain = QUESTION_TIME_SEC;
+  // prepare options: correct + 2 distractors from same difficulty if possible
+  const level = difficultyForScore(state.score);
+  const pool = [].concat(...Object.values(QUESTIONS));
+  const distractors = pool.filter(m => m.id !== q.id);
+  shuffle(distractors);
+  const opts = [q.name, ...(distractors.slice(0,2).map(d=>d.name))];
+  shuffle(opts);
+
+  // show UI and pause main animation
+  pauseForQuestion();
+  questionTitle.innerText = `Question ${state.questionIndex} / ${TOTAL_QUESTIONS}`;
+  questionText.innerText = `Identify this microbe:`;
+  answersArea.innerHTML = '';
+  opts.forEach(opt=>{
+    const b = document.createElement('button');
+    b.className = 'ghost';
+    b.style.width = '100%';
+    b.style.padding = '10px';
+    b.style.marginTop = '6px';
+    b.textContent = opt;
+    b.onclick = ()=>{ answerQuestion(opt, q.name); };
+    answersArea.appendChild(b);
+  });
+
+  // show the microbe drawing in a small preview inside the answers area
+  const previewCanvas = document.createElement('canvas');
+  previewCanvas.width = 300; previewCanvas.height = 160; previewCanvas.style.width='100%'; previewCanvas.style.height='120px'; previewCanvas.style.borderRadius='8px'; previewCanvas.style.display='block'; previewCanvas.style.marginTop='8px';
+  answersArea.insertBefore(previewCanvas, answersArea.firstChild);
+  const pctx = previewCanvas.getContext('2d');
+  // draw the microbe scaled to preview
+  function drawPreview(){
+    pctx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
+    // draw with same function but transform
+    pctx.save();
+    // scale down to match drawing rules
+    pctx.translate(previewCanvas.width/2, previewCanvas.height/2);
+    // adapt: reuse drawMicrobePreview but needs global ctx; temporarily map
+    drawPreviewMicrobeOn(pctx, q, previewCanvas.width, previewCanvas.height);
+    pctx.restore();
+  }
+  drawPreview();
+
+  // start timer countdown
+  timerFill.style.width = '100%';
+  questionTimerInterval && clearInterval(questionTimerInterval);
+  questionTimerInterval = setInterval(()=>{
+    state.timerRemain -= 1;
+    const pct = clamp( (state.timerRemain/QUESTION_TIME_SEC)*100, 0, 100 );
+    timerFill.style.width = pct + '%';
+    if(state.timerRemain <= 0){
+      clearInterval(questionTimerInterval);
+      // automatically treat as wrong and continue
+      answerQuestion(null, q.name, true);
     }
-  }
+  }, 1000);
+}
 
-  // collisions: nutrients
-  for(let i=state.nutrients.length-1;i>=0;i--){
-    const n = state.nutrients[i];
-    if(dist(state.microbe, n) < state.microbe.r + n.r - 6){
-      state.nutrients.splice(i,1);
-      state.streak++; state.comboMult = 1 + Math.floor(state.streak/6)*0.25;
-      const gain = Math.round(n.value * state.comboMult);
-      state.score += gain; spawnParticle(n.x, n.y, "+"+gain, "#7ef27e", 48); beep(880,0.06,'sine',0.04);
-      if(state.mutationStage >= 4 && Math.random()<0.12) state.health = Math.min(5, state.health+1);
-      applyEvolution(); updateHUD(); checkQuizTrigger();
-    }
+/* small helper: draw preview microbe on a given 2D context */
+function drawPreviewMicrobeOn(pctx, m, w, h){
+  // simple scaled drawing: center at 0,0; size based on min(w,h)
+  const size = Math.min(w,h) * 0.6;
+  // background halo
+  pctx.beginPath(); pctx.fillStyle = hexToRgba(m.color,0.12); pctx.arc(0,0,size*0.52,0,Math.PI*2); pctx.fill();
+  pctx.fillStyle = m.color;
+  if(m.features.shape==='rod'){
+    pctx.beginPath(); roundRectOn(pctx, -size*0.4, -size*0.12, size*0.8, size*0.24, size*0.06, true, false);
+  } else if(m.features.shape==='coccus'){
+    pctx.beginPath(); pctx.arc(0,0,size*0.22,0,Math.PI*2); pctx.fill();
+  } else if(m.features.shape==='filament'){
+    for(let i=-3;i<6;i++){ pctx.beginPath(); pctx.moveTo(-size*0.45 + i*size*0.12, -size*0.02); pctx.lineTo(-size*0.3 + i*size*0.12, -size*0.22); pctx.lineTo(-size*0.2 + i*size*0.12, -size*0.02); pctx.closePath(); pctx.fill(); }
+  } else {
+    pctx.beginPath(); pctx.ellipse(0,0,size*0.32,size*0.22,0,0,Math.PI*2); pctx.fill();
   }
+  // small details
+  if(m.features.spikes){
+    pctx.strokeStyle = hexToRgba('#000',0.15); pctx.lineWidth=2;
+    for(let a=0;a<10;a++){ const ang = a*(Math.PI*2/10); pctx.beginPath(); pctx.moveTo(Math.cos(ang)*size*0.28,Math.sin(ang)*size*0.28); pctx.lineTo(Math.cos(ang)*size*0.44,Math.sin(ang)*size*0.44); pctx.stroke(); }
+  }
+}
+function roundRectOn(c,x,y,w,h,r,fill,stroke){ if(r===undefined) r=6; c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); if(fill) c.fill(); if(stroke) c.stroke(); }
 
-  // collisions: antibiotics
-  for(let i=state.antibiotics.length-1;i>=0;i--){
-    const a = state.antibiotics[i];
-    if(dist(state.microbe, a) < state.microbe.r + a.r - 6){
-      state.antibiotics.splice(i,1);
-      let dmg = 1;
-      if(state.microbe.shieldActive){ dmg = 0; state.microbe.shieldActive = false; spawnParticle(state.microbe.x,state.microbe.y,"Shielded","#00f0ff",40); beep(240,0.04,'sine',0.03); }
-      else {
-        const mitigation = state.mutationStage * 0.3; dmg = Math.max(0, Math.round(1 - mitigation));
-        if(state.mutationStage >= 4 && Math.random()<0.6) dmg = 0;
-      }
-      if(dmg>0){ state.health -= dmg; state.streak = 0; state.comboMult = 1; spawnParticle(state.microbe.x,state.microbe.y,"-"+dmg,"#ff6b6b",48); blast(160,0.12); }
+/* ------------------- Answer handling ------------------- */
+function answerQuestion(selected, correct, timedOut=false){
+  // resume main animation
+  clearInterval(questionTimerInterval);
+  resumeFromQuestion();
+  // evaluate
+  let correctFlag = (selected === correct);
+  if(timedOut) correctFlag = false;
+  if(correctFlag){
+    // score multipliers by difficulty
+    const level = difficultyForScore(state.score);
+    const add = (level==='easy')?1:(level==='medium')?2:3;
+    state.score += add;
+    playCorrect();
+    showBanner('Correct! +' + add);
+    awardBadges(state.score);
+  } else {
+    state.health -= 1;
+    state.score = Math.max(0, state.score - 0); // optionally penalize
+    playWrong();
+    showBanner('Wrong');
+    if(state.health <= 0){
+      // game over due to health
+      setTimeout(()=> endGame(), 1200);
       updateHUD();
-      if(state.health <= 0){ endGame(); return; }
+      return;
     }
-  }
-
-  // powerup pickups
-  for(let i=state.powerups.length-1;i>=0;i--){
-    const p = state.powerups[i];
-    if(dist(state.microbe, p) < state.microbe.r + p.r - 4){
-      applyPowerup(p.type); state.powerups.splice(i,1); spawnParticle(p.x,p.y,"+"+p.type.toUpperCase(),"#ffd166",48); beep(660,0.06,'triangle',0.05);
-    }
-  }
-
-  // update particles
-  for(let i=state.particles.length-1;i>=0;i--){
-    const p = state.particles[i]; p.x += p.vx; p.y += p.vy; p.life--;
-    if(p.life <= 0) state.particles.splice(i,1);
-  }
-
-  // boss missiles update
-  if(state.boss && state.boss.missiles){
-    for(let i=state.boss.missiles.length-1;i>=0;i--){
-      const m = state.boss.missiles[i];
-      m.x += m.vx; m.y += m.vy;
-      if(dist(m, state.microbe) < 16){
-        state.boss.missiles.splice(i,1);
-        // hit microbe
-        if(state.microbe.shieldActive){ state.microbe.shieldActive = false; spawnParticle(state.microbe.x,state.microbe.y,"Shielded","#00f0ff",40); }
-        else { state.health--; spawnParticle(state.microbe.x,state.microbe.y,"-1","#ff6b6b",48); updateHUD(); if(state.health<=0){ endGame(); return; } }
-      } else if(m.x < -20 || m.x > W+20 || m.y > H+40) state.boss.missiles.splice(i,1);
-    }
-  }
-
-  // render
-  renderScene();
-  requestAnimationFrame(mainLoop);
-}
-
-/* Powerups */
-function applyPowerup(type){
-  const m = state.microbe;
-  if(type === 'shield'){ m.shieldActive = true; setTimeout(()=> m.shieldActive = false, 7000); }
-  if(type === 'magnet'){ m.magnetActive = true; setTimeout(()=> m.magnetActive = false, 9000); }
-  if(type === 'speed'){ m.speedMult = 1.8; setTimeout(()=> m.speedMult = 1, 8000); }
-}
-
-/* Boss */
-function spawnBoss(){
-  state.boss = { x: W/2, y: -60, active: true, missiles: [], lastFire: performance.now() };
-  // entry animation
-  const entryInterval = setInterval(()=>{ if(!state.boss){ clearInterval(entryInterval); return; } state.boss.y += 4; if(state.boss.y >= 70){ clearInterval(entryInterval); } }, 16);
-  // schedule exit
-  setTimeout(()=>{ if(state.boss) state.boss = null; }, 12*1000);
-  for(let i=0;i<6;i++) fireBossMissile();
-  beep(220,0.12,'sawtooth',0.06);
-}
-function fireBossMissile(){
-  if(!state.boss) return;
-  const angle = Math.atan2(state.microbe.y - state.boss.y, state.microbe.x - state.boss.x) + rand(-0.4,0.4);
-  const spd = rand(2.4,4.2);
-  state.boss.missiles.push({ x: state.boss.x, y: state.boss.y+30, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd });
-}
-
-/* Evolution rules */
-function applyEvolution(){
-  const s = state.score;
-  const prev = state.mutationStage;
-  if(s >= 500) state.mutationStage = 5;
-  else if(s >= 350) state.mutationStage = 4;
-  else if(s >= 200) state.mutationStage = 3;
-  else if(s >= 100) state.mutationStage = 2;
-  else if(s >= 40) state.mutationStage = 1;
-  if(state.mutationStage !== prev){
-    showBanner("Mutation: " + MUTATIONS[state.mutationStage].name);
-    showPopup(MUTATIONS[state.mutationStage].name, MUTATIONS[state.mutationStage].info);
-    beep(980,0.12,'sine',0.06);
-    // small buff
-    state.microbe.speedMult = 1 + 0.08 * state.mutationStage;
-    state.score += 3 * state.mutationStage;
   }
   updateHUD();
+  // small delay then next question or end
+  setTimeout(()=>{
+    if(state.questionIndex >= TOTAL_QUESTIONS){
+      endGame();
+    } else startQuestionFlow();
+  }, 450);
 }
 
-/* Banner & popup */
-const mutBanner = document.getElementById('mutBanner');
-function showBanner(msg, duration=1400){
-  mutBanner.textContent = msg; mutBanner.style.display = 'block'; mutBanner.style.opacity = '1';
-  setTimeout(()=>{ mutBanner.style.transition = 'opacity 380ms'; mutBanner.style.opacity = '0'; setTimeout(()=> mutBanner.style.display='none',420); }, duration);
+/* ------------------- Pause Management ------------------- */
+function pauseForQuestion(){
+  // pause main animation but keep UI visible
+  state.paused = true;
+  if(animReq) cancelAnimationFrame(animReq);
+  animReq = null;
+}
+function resumeFromQuestion(){
+  state.paused = false;
+  if(!animReq) render();
 }
 
-/* Popup modal (quiz and evolution) */
-const quizModal = document.getElementById('quizModal'), quizQ = document.getElementById('quizQ'), quizText = document.getElementById('quizText'), quizChoices = document.getElementById('quizChoices'), closeQuiz = document.getElementById('closeQuiz');
-function showPopup(title, text){
-  quizQ.textContent = title; quizText.textContent = text;
-  quizChoices.innerHTML = '<div style="font-size:12px;color:var(--muted);margin-top:8px">(close to continue)</div>';
-  quizModal.style.display = 'block';
-  setTimeout(()=>{ quizModal.style.opacity = '1'; }, 10);
-}
-closeQuiz.addEventListener('click', ()=> { quizModal.style.display='none'; });
-
-/* Quiz (modal) */
-const quizQuestions = [
-  { q:"Which mutation shifts the reading frame?", choices:["Substitution","Insertion","Frameshift","Duplication"], a:"Frameshift" },
-  { q:"Which trait helps bacteria move toward nutrients?", choices:["Flagella","Biofilm","Spore","Efflux pump"], a:"Flagella" },
-  { q:"What does an efflux pump do?", choices:["Import nutrients","Eject toxins","Cause mutation","Form spores"], a:"Eject toxins" }
-];
-function checkQuizTrigger(){
-  const prev = Math.floor((state.score - 1) / 100);
-  const curr = Math.floor(state.score / 100);
-  if(curr > prev && !state.quizActive){
-    state.quizActive = true;
-    // pick a random question
-    const qq = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
-    quizQ.textContent = "Quick Quiz: " + qq.q;
-    quizText.textContent = "Choose the correct answer to get +30 bonus points.";
-    quizChoices.innerHTML = '';
-    qq.choices.forEach(choice => {
-      const b = document.createElement('button'); b.className = 'btn-answer'; b.textContent = choice;
-      b.addEventListener('click', ()=>{ 
-        if(choice === qq.a){ state.score += 30; spawnParticle(state.microbe.x, state.microbe.y, "+30 BONUS","#ffde59",60); beep(1200,0.08,'sine',0.07); }
-        else { spawnParticle(state.microbe.x, state.microbe.y, "No Bonus","#ff6b6b",60); }
-        state.quizActive = false; quizModal.style.display = 'none'; updateHUD();
-      });
-      quizChoices.appendChild(b);
-    });
-    quizModal.style.display = 'block';
-  }
+/* ------------------- Banner ------------------- */
+function showBanner(msg, duration=1200){
+  mutBanner.innerText = msg; mutBanner.style.display='block'; mutBanner.style.opacity='1';
+  setTimeout(()=>{ mutBanner.style.transition='opacity 380ms'; mutBanner.style.opacity='0'; setTimeout(()=>{ mutBanner.style.display='none'; mutBanner.style.transition=''; },420); }, duration);
 }
 
-/* HUD updates */
+/* ------------------- HUD / Progress / Badges ------------------- */
 function updateHUD(){
-  document.getElementById('score').textContent = Math.max(0, state.score);
-  document.getElementById('streak').textContent = state.streak;
-  document.getElementById('stageName').textContent = MUTATIONS[state.mutationStage].name;
-  document.getElementById('healthDisplay').innerHTML = heartString(state.health);
+  scoreVal.innerText = state.score;
+  healthVal.innerText = '❤'.repeat(Math.max(0,state.health));
+  stageVal.innerText = stageLabel();
+}
+function updateProgress(){
+  progressText.innerText = `${state.questionIndex} / ${TOTAL_QUESTIONS}`;
+  const pct = (state.questionIndex / TOTAL_QUESTIONS) * 100;
+  progressFill.style.width = pct + '%';
+}
+function awardBadges(score){
+  if(score >= 3) state.badges.add('Beginner Biologist');
+  if(score >= 6) state.badges.add('Lab Expert');
+  if(score >= 10) state.badges.add('Microbe Master');
+  renderBadges();
+}
+function renderBadges(){
+  badgesDiv.innerHTML = '';
+  state.badges.forEach(b=>{
+    const el = document.createElement('div'); el.className='badge'; el.innerText=b;
+    badgesDiv.appendChild(el);
+  });
+}
+function resetBadgesFunc(){ state.badges = new Set(); renderBadges(); localStorage.removeItem('mb_badges'); }
+
+/* ------------------- End game & results ------------------- */
+function endGame(){
+  // stop timers and animation
+  clearInterval(questionTimerInterval);
+  if(animReq) cancelAnimationFrame(animReq);
+  animReq=null;
+  state.running=false;
+  // show stats
+  gameOver.style.display='block';
+  gameOverTitle.innerText = 'Game Completed';
+  finalStats.innerText = `Score: ${state.score}\nHealth: ${state.health}\nQuestions answered: ${state.questionIndex} / ${TOTAL_QUESTIONS}`;
+  // persist badges
+  localStorage.setItem('mb_badges', JSON.stringify(Array.from(state.badges)));
 }
 
-/* Input handling - keyboard */
-window.addEventListener('keydown', (e)=>{ keys[e.key] = true; if(e.key === ' '){ if(!state.running){ ensureAudio(); startGame(); } e.preventDefault(); }});
-window.addEventListener('keyup', (e)=>{ keys[e.key] = false; });
-
-/* Touch / pointer controls on canvas
-   - pointerdown/touchstart sets touchTarget
-   - pointermove updates it
-   - pointerup clears it
-*/
-canvas.addEventListener('pointerdown', (ev)=>{
-  ev.preventDefault();
-  ensureAudio();
-  const rect = canvas.getBoundingClientRect();
-  const x = (ev.clientX - rect.left);
-  const y = (ev.clientY - rect.top);
-  touchTarget = { x, y };
-  // if not running yet, start game on first gesture
-  if(!state.running){ startGame(); }
-});
-canvas.addEventListener('pointermove', (ev)=>{
-  if(!touchTarget) return;
-  ev.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  touchTarget.x = (ev.clientX - rect.left);
-  touchTarget.y = (ev.clientY - rect.top);
-});
-canvas.addEventListener('pointerup', (ev)=>{
-  ev.preventDefault();
-  touchTarget = null;
-});
-canvas.addEventListener('pointercancel', ()=>{ touchTarget = null; });
-canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); }, {passive:false});
-
-/* D-pad buttons (touch) */
-function bindDpadButton(id, keyName){
-  const el = document.getElementById(id);
-  if(!el) return;
-  const start = (e)=>{
-    e.preventDefault();
-    activeDpad[keyName] = true;
-    // ensure audio/game start on first touch
-    ensureAudio();
-    if(!state.running) startGame();
-  };
-  const stop = (e)=>{
-    e.preventDefault();
-    activeDpad[keyName] = false;
-  };
-  el.addEventListener('touchstart', start, {passive:false});
-  el.addEventListener('touchend', stop);
-  el.addEventListener('touchcancel', stop);
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', stop);
-  el.addEventListener('mouseleave', stop);
-}
-bindDpadButton('btnLeft','left');
-bindDpadButton('btnRight','right');
-bindDpadButton('btnUp','up');
-bindDpadButton('btnDown','down');
-bindDpadButton('btnBoost','boost');
-
-/* Controls wiring (buttons) */
-document.getElementById('startBtn').addEventListener('click', ()=>{ ensureAudio(); startGame(); });
-document.getElementById('pauseBtn').addEventListener('click', ()=>{ state.paused = !state.paused; document.getElementById('pauseBtn').textContent = state.paused ? "Resume" : "Pause"; });
-document.getElementById('resetBtn').addEventListener('click', resetGame);
-document.getElementById('hintBtn').addEventListener('click', ()=>{ showPopup("How to play","On mobile: tap and drag the canvas to move your microbe. Use the on-screen D-pad (bottom) to move or boost. On desktop use arrow keys or WASD."); });
-
-/* Start / Reset / End */
+/* ------------------- Start / Reset functions ------------------- */
 function startGame(){
-  if(!state.running){
-    resetGame();
-    state.running = true; state.paused = false; state.lastBossAt = performance.now();
-    requestAnimationFrame(mainLoop);
-  } else { state.paused = false; requestAnimationFrame(mainLoop); }
+  ensureAudio();
+  state.running = true;
+  state.paused = false;
+  state.score = 0; state.health = 3; state.questionIndex = 0; usedQuestionIds.clear();
+  // load persisted badges
+  const saved = localStorage.getItem('mb_badges'); if(saved){ state.badges = new Set(JSON.parse(saved)); }
+  updateHUD(); renderBadges(); updateProgress();
+  startModal.style.display='none';
+  encModal.style.display='none';
+  gameOver.style.display='none';
+  // start main rendering
+  if(!animReq) render();
+  // start first question after short delay
+  setTimeout(()=> startQuestionFlow(), 400);
 }
 function resetGame(){
-  state.running = false; state.paused = false; state.score = 0; state.streak = 0; state.comboMult = 1; state.health = 5; state.mutationStage = 0;
-  state.microbe = { x: W/2, y: H/2, r: SETTINGS.microbeRadius, speed: SETTINGS.baseSpeed, trail: [], shieldActive:false, magnetActive:false, speedMult:1 };
-  state.nutrients = []; state.antibiotics = []; state.powerups = []; state.particles = []; state.boss = null; state.lastBossAt = performance.now(); state.frame = 0; state.quizActive = false;
-  for(let i=0;i<6;i++) spawnNutrient();
-  updateHUD(); renderScene();
-}
-function endGame(){
-  state.running = false; beep(220,0.14,'sine',0.08);
-  setTimeout(()=>{ alert(`💀 Your microbe died!\nScore: ${state.score}\nStage: ${MUTATIONS[state.mutationStage].name}`); resetGame(); }, 60);
+  state.running=false; state.paused=false; usedQuestionIds.clear(); state.score=0; state.health=3; state.questionIndex=0;
+  updateHUD(); updateProgress(); renderBadges();
+  if(animReq) cancelAnimationFrame(animReq); render();
+  startModal.style.display='block';
 }
 
-/* small helper for spawning initial content */
-for(let i=0;i<6;i++) spawnNutrient();
+/* ------------------- Encyclopedia ------------------- */
+function showEncyclopedia(){
+  encList.innerHTML='';
+  MICROBES.forEach(m=>{
+    const el = document.createElement('div');
+    el.style.display='flex'; el.style.gap='8px'; el.style.alignItems='center'; el.style.padding='8px'; el.style.borderBottom='1px solid rgba(255,255,255,0.03)';
+    const mini = document.createElement('canvas'); mini.width=120; mini.height=80; mini.style.width='120px'; mini.style.height='80px';
+    const miniCtx = mini.getContext('2d');
+    drawPreviewMicrobeOn(miniCtx,m,120,80);
+    const info = document.createElement('div');
+    const title = document.createElement('div'); title.style.fontWeight='800'; title.innerText = m.name;
+    const desc = document.createElement('div'); desc.className='small'; desc.innerText = m.desc;
+    info.appendChild(title); info.appendChild(desc);
+    el.appendChild(mini); el.appendChild(info);
+    encList.appendChild(el);
+  });
+  encModal.style.display='block';
+}
 
-/* Initialize HUD & render one frame */
-updateHUD(); renderScene();
+/* ------------------- small helpers for preview -> used earlier ------------------- */
+/* drawPreviewMicrobeOn already defined */
+
+/* ------------------- events ------------------- */
+playBtn.addEventListener('click', ()=>{ ensureAudio(); startGame(); });
+playBtn.addEventListener('touchstart', ()=>{ ensureAudio(); });
+demoBtn.addEventListener('click', ()=>{ ensureAudio(); state.score=2; state.health=3; updateHUD(); startGame(); });
+howBtn.addEventListener('click', ()=>{ howModal.style.display='block'; });
+closeHow.addEventListener('click', ()=>{ howModal.style.display='none'; });
+startBtn2.addEventListener('click', ()=>{ if(!state.running){ startGame(); } else { state.paused=false; if(!animReq) render(); } });
+pauseBtn.addEventListener('click', ()=>{ state.paused = !state.paused; if(state.paused){ if(animReq) cancelAnimationFrame(animReq); animReq=null; pauseBtn.textContent='Resume'; } else { pauseBtn.textContent='Pause'; if(!animReq) render(); }});
+resetBtn.addEventListener('click', ()=>{ resetGame(); });
+toggleMusic.addEventListener('click', ()=>{ state.soundOn = !state.soundOn; toggleMusic.textContent = 'Sound: ' + (state.soundOn ? 'On' : 'Off'); });
+
+openEnc.addEventListener('click', ()=>{ showEncyclopedia(); ensureAudio(); });
+closeEnc.addEventListener('click', ()=>{ encModal.style.display='none'; });
+
+playAgain.addEventListener('click', ()=>{ gameOver.style.display='none'; startGame(); });
+closeOver.addEventListener('click', ()=>{ gameOver.style.display='none'; startModal.style.display='block'; });
+resetBadges.addEventListener('click', ()=>{ resetBadgesFunc(); });
+
+themeToggle.addEventListener('change', (e)=>{ const t = e.target.checked ? 'light' : 'dark'; document.body.setAttribute('data-theme',t); state.theme=t; });
+
+/* D-pad for mobile: basic set of flags (you can wire movement if needed) */
+let dpadState = {up:false,down:false,left:false,right:false,boost:false};
+function bindD(btn,flag){ btn.addEventListener('touchstart',(e)=>{ e.preventDefault(); dpadState[flag]=true; }); btn.addEventListener('touchend',(e)=>{ e.preventDefault(); dpadState[flag]=false; }); btn.addEventListener('mousedown',(e)=>{ dpadState[flag]=true; }); btn.addEventListener('mouseup',(e)=>{ dpadState[flag]=false; }); }
+bindD(dpUp,'up'); bindD(dpDown,'down'); bindD(dpLeft,'left'); bindD(dpRight,'right'); bindD(dpBoost,'boost');
+
+/* Persist badges when page unload */
+window.addEventListener('beforeunload', ()=>{ localStorage.setItem('mb_badges', JSON.stringify(Array.from(state.badges))); });
+
+/* ------------------- Initialization ------------------- */
+updateHUD(); renderBadges();
+document.getElementById('startModal').style.display='block';
+document.getElementById('howModal').style.display='none';
+document.getElementById('encModal').style.display='none';
+document.getElementById('gameOver').style.display='none';
+
+/* Helper to draw microbe previews on contexts used earlier; exposed already */
+/* All done. Enjoy! */
 
 </script>
 </body>
 </html>
+
