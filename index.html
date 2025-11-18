@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Microbe Battle — Final (MCQ every 20s, no evolution popup)</title>
+<title>Microbe Battle — Final Upgraded</title>
 <style>
   :root{
     --bg1:#040917; --bg2:#07132a; --panel:#082437; --neon-cyan:#00f0ff;
@@ -60,6 +60,28 @@
     .introCard{padding:12px}
   }
   .quiz-opt{display:block;width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#e6fbff;text-align:left;cursor:pointer}
+
+  /* Touch controls */
+  #touchControls {
+    position: fixed; 
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    display: flex; 
+    gap: 10px; 
+    z-index: 1000;
+  }
+  #touchControls button {
+    background: var(--neon-cyan);
+    border: none;
+    padding: 16px 22px;
+    border-radius: 50%;
+    font-weight: 900;
+    color: #02101a;
+    font-size: 20px;
+    box-shadow: 0 8px 24px rgba(0,240,255,0.06);
+    user-select: none;
+  }
 </style>
 </head>
 <body>
@@ -84,7 +106,6 @@
 
         <div style="margin-left:auto;display:flex;align-items:center">
           <div class="legend" aria-hidden="true">
-            <!-- Style 1: Emoji Icons chosen -->
             <div class="legend-item"><div class="icon friend">🦠</div>Friendly Microbe</div>
             <div class="legend-item"><div class="icon anti">☣️</div>Antibiotic</div>
             <div class="legend-item"><div class="icon nutr">🍎</div>Nutrient</div>
@@ -122,7 +143,7 @@
   </div>
 </div>
 
-<!-- Quiz Modal (only MCQ modal will appear) -->
+<!-- Quiz Modal -->
 <div id="quizModal" class="popup-modal" role="dialog" aria-modal="true" aria-hidden="true">
   <h3 id="quizQ" class="quiz-title">Quick Quiz</h3>
   <p id="quizText" class="small">text</p>
@@ -139,8 +160,8 @@
         <p class="small">You control a friendly microbe. Collect nutrients to score points and evolve. Avoid antibiotics — they deal damage. Pick up power-ups to gain temporary advantages.</p>
 
         <div class="controls-list">
-          <div class="small"><strong>Controls:</strong> Arrow keys / WASD to move · Space to start · Click buttons to Pause / Reset</div>
-          <div class="small"><strong>Goal:</strong> Reach higher mutation stages to unlock buffs. Answer quick quizzes for large bonus points.</div>
+          <div class="small"><strong>Controls:</strong> Arrow keys / WASD to move · Space to start · Click buttons to Pause / Reset · Touch buttons for mobile</div>
+          <div class="small"><strong>Goal:</strong> Reach higher mutation stages to unlock buffs. Answer quick quizzes for large bonus points. Reach score limit to win.</div>
         </div>
 
         <div class="mutations-list">
@@ -159,13 +180,17 @@
   </div>
 </div>
 
+<!-- Touch Controls for Mobile -->
+<div id="touchControls">
+  <button onclick="keys['ArrowLeft']=true; setTimeout(()=>keys['ArrowLeft']=false,200);">←</button>
+  <button onclick="keys['ArrowUp']=true; setTimeout(()=>keys['ArrowUp']=false,200);">↑</button>
+  <button onclick="keys['ArrowDown']=true; setTimeout(()=>keys['ArrowDown']=false,200);">↓</button>
+  <button onclick="keys['ArrowRight']=true; setTimeout(()=>keys['ArrowRight']=false,200);">→</button>
+</div>
+
 <script>
-/* Final game code with:
-   - MCQ every 20 seconds of active play
-   - Evolution does NOT show modal popups
-   - Only MCQ modal interrupts play
-   - Correct answer = +500
-*/
+/* Constants */
+const MAX_SCORE = 1000;
 
 /* Canvas setup */
 const canvas = document.getElementById('gameCanvas');
@@ -212,7 +237,7 @@ let state = {
   microbe: { x: W/2, y: H/2, r: SETTINGS.microbeRadius, speed: SETTINGS.baseSpeed, trail: [], shieldActive:false, magnetActive:false, speedMult:1 },
   nutrients: [], antibiotics: [], powerups: [], particles: [], boss: null,
   lastBossAt: performance.now(), frame:0,
-  quizActive:false, playTime:0 // playTime accumulates only while running & not paused
+  quizActive:false, playTime:0
 };
 
 /* Audio */
@@ -264,7 +289,7 @@ function mainLoop(ts){
   const dt = ts - lastFrameTime; lastFrameTime = ts;
   state.frame++;
 
-  // accumulate playTime only while running & not paused
+  // accumulate playTime while active
   state.playTime += dt;
 
   // spawn items
@@ -272,10 +297,10 @@ function mainLoop(ts){
   if(Math.random() < SETTINGS.spawnChance.antibiotic) spawnAntibiotic();
   if(Math.random() < SETTINGS.spawnChance.powerup) spawnPowerup();
 
-  // boss
+  // boss spawn
   if(performance.now() - state.lastBossAt > SETTINGS.bossIntervalMs){ spawnBoss(); state.lastBossAt = performance.now(); }
 
-  // update antibiotics
+  // update antibiotics position
   for(let i=state.antibiotics.length-1;i>=0;i--){ const a = state.antibiotics[i]; a.x += a.vx * (dt/16); a.y += a.vy * (dt/16); if(a.y - a.r > H + 80 || a.x < -100 || a.x > W + 100) state.antibiotics.splice(i,1); }
 
   // update powerups TTL
@@ -292,46 +317,110 @@ function mainLoop(ts){
   state.microbe.x += (dx/mag) * speed * (dt/16);
   state.microbe.y += (dy/mag) * speed * (dt/16);
 
-  // trail
+  // trail effect
   state.microbe.trail.unshift({x:state.microbe.x, y:state.microbe.y});
   if(state.microbe.trail.length > 12) state.microbe.trail.pop();
 
-  // clamp
+  // clamp inside canvas
   state.microbe.x = clamp(state.microbe.x, state.microbe.r, W - state.microbe.r);
   state.microbe.y = clamp(state.microbe.y, state.microbe.r, H - state.microbe.r);
 
-  // magnet
+  // magnet effect
   if(state.microbe.magnetActive){ for(const n of state.nutrients){ const d = Math.hypot(n.x - state.microbe.x, n.y - state.microbe.y); if(d < 160){ n.x += (state.microbe.x - n.x) * 0.06; n.y += (state.microbe.y - n.y) * 0.06; } } }
 
   // collisions: nutrients
-  for(let i=state.nutrients.length-1;i>=0;i--){ const n = state.nutrients[i]; if(dist(state.microbe, n) < state.microbe.r + n.r - 6){ state.nutrients.splice(i,1); state.streak++; state.comboMult = 1 + Math.floor(state.streak/6)*0.25; const gain = Math.round(n.value * state.comboMult); state.score += gain; spawnParticle(n.x, n.y, "+"+gain, "#7ef27e", 48); beep(880,0.06,'sine',0.04); if(state.mutationStage >= 4 && Math.random()<0.12) state.health = Math.min(5, state.health+1); applyEvolution(); updateHUD(); checkQuizTrigger(); } }
+  for(let i=state.nutrients.length-1;i>=0;i--){
+    const n = state.nutrients[i];
+    if(dist(state.microbe, n) < state.microbe.r + n.r - 6){
+      state.nutrients.splice(i,1);
+      state.streak++;
+      state.comboMult = 1 + Math.floor(state.streak/6)*0.25;
+      const gain = Math.round(n.value * state.comboMult);
+      state.score += gain;
+      spawnParticle(n.x, n.y, "+"+gain, "#7ef27e", 48);
+      beep(880,0.06,'sine',0.04);
+      if(state.mutationStage >= 4 && Math.random()<0.12) state.health = Math.min(5, state.health+1);
+
+      applyEvolution();
+      updateHUD();
+      checkQuizTrigger();
+
+      // Check for max score to end game
+      if(state.score >= MAX_SCORE){
+        state.running = false;
+        alert(`🎉 Congratulations! You reached the max score of ${MAX_SCORE}!\nYou won the game.`);
+        resetGame();
+        return;
+      }
+    }
+  }
 
   // collisions: antibiotics
-  for(let i=state.antibiotics.length-1;i>=0;i--){ const a = state.antibiotics[i]; if(dist(state.microbe, a) < state.microbe.r + a.r - 6){ state.antibiotics.splice(i,1); let dmg = 1; if(state.microbe.shieldActive){ dmg = 0; state.microbe.shieldActive = false; spawnParticle(state.microbe.x,state.microbe.y,"Shielded","#00f0ff",40); beep(240,0.04,'sine',0.03); } else { const mitigation = state.mutationStage * 0.3; dmg = Math.max(0, Math.round(1 - mitigation)); if(state.mutationStage >= 4 && Math.random()<0.6) dmg = 0; } if(dmg>0){ state.health -= dmg; state.streak = 0; state.comboMult = 1; spawnParticle(state.microbe.x,state.microbe.y,"-"+dmg,"#ff6b6b",48); blast(160,0.12); } updateHUD(); if(state.health <= 0){ endGame(); return; } } }
+  for(let i=state.antibiotics.length-1;i>=0;i--){
+    const a = state.antibiotics[i];
+    if(dist(state.microbe, a) < state.microbe.r + a.r - 6){
+      state.antibiotics.splice(i,1);
+      let dmg = 1;
+      if(state.microbe.shieldActive){
+        dmg = 0;
+        state.microbe.shieldActive = false;
+        spawnParticle(state.microbe.x,state.microbe.y,"Shielded","#00f0ff",40);
+        beep(240,0.04,'sine',0.03);
+      } else {
+        const mitigation = state.mutationStage * 0.3;
+        dmg = Math.max(0, Math.round(1 - mitigation));
+        if(state.mutationStage >= 4 && Math.random()<0.6) dmg = 0;
+      }
+      if(dmg > 0){
+        state.health -= dmg;
+        state.streak = 0;
+        state.comboMult = 1;
+        spawnParticle(state.microbe.x,state.microbe.y,"-"+dmg,"#ff6b6b",48);
+        blast(160,0.12);
+      }
+      updateHUD();
+      if(state.health <= 0){
+        endGame();
+        return;
+      }
+    }
+  }
 
   // powerup pickups
-  for(let i=state.powerups.length-1;i>=0;i--){ const p = state.powerups[i]; if(dist(state.microbe, p) < state.microbe.r + p.r - 4){ applyPowerup(p.type); state.powerups.splice(i,1); spawnParticle(p.x,p.y,"+"+p.type.toUpperCase(),"#ffd166",48); beep(660,0.06,'triangle',0.05); } }
+  for(let i=state.powerups.length-1;i>=0;i--){
+    const p = state.powerups[i];
+    if(dist(state.microbe, p) < state.microbe.r + p.r - 4){
+      applyPowerup(p.type);
+      state.powerups.splice(i,1);
+      spawnParticle(p.x,p.y,"+"+p.type.toUpperCase(),"#ffd166",48);
+      beep(660,0.06,'triangle',0.05);
+    }
+  }
 
   // update particles
-  for(let i=state.particles.length-1;i>=0;i--){ const p = state.particles[i]; p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) state.particles.splice(i,1); }
+  for(let i=state.particles.length-1;i>=0;i--){
+    const p = state.particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if(p.life <= 0) state.particles.splice(i,1);
+  }
 
-  // render
+  // render frame
   render();
 
-  // QUIZ trigger: every SETTINGS.quizIntervalMs of accumulated playTime
+  // QUIZ trigger every quizIntervalMs of playTime
   if(!state.quizActive && state.playTime >= SETTINGS.quizIntervalMs){
-    // pause and show quiz
     state.quizActive = true;
     state.paused = true;
     showQuizModal();
-    // reset playTime to 0 after showing quiz (so next quiz after another interval of play)
     state.playTime = 0;
   }
 
   requestAnimationFrame(mainLoop);
 }
 
-/* Render */
+/* Render function */
 function render(){
   ctx.clearRect(0,0,W,H);
   drawNeonGrid();
@@ -344,13 +433,40 @@ function render(){
 }
 
 /* Powerups */
-function applyPowerup(type){ const m = state.microbe; if(type === 'shield'){ m.shieldActive = true; setTimeout(()=> m.shieldActive = false, 7000); } if(type === 'magnet'){ m.magnetActive = true; setTimeout(()=> m.magnetActive = false, 9000); } if(type === 'speed'){ m.speedMult = 1.8; setTimeout(()=> m.speedMult = 1, 8000); } }
+function applyPowerup(type){
+  const m = state.microbe;
+  if(type === 'shield'){
+    m.shieldActive = true; setTimeout(()=> m.shieldActive = false, 7000);
+  }
+  if(type === 'magnet'){
+    m.magnetActive = true; setTimeout(()=> m.magnetActive = false, 9000);
+  }
+  if(type === 'speed'){
+    m.speedMult = 1.8; setTimeout(()=> m.speedMult = 1, 8000);
+  }
+}
 
-/* Boss */
-function spawnBoss(){ state.boss = { x: W/2, y: -60, active: true, missiles: [], lastFire: performance.now() }; const entryInterval = setInterval(()=>{ state.boss.y += 4; if(state.boss.y >= 70){ clearInterval(entryInterval); } }, 16); setTimeout(()=>{ if(state.boss) state.boss = null; }, 12*1000); for(let i=0;i<6;i++) fireBossMissile(); beep(220,0.12,'sawtooth',0.06); }
-function fireBossMissile(){ if(!state.boss) return; const angle = Math.atan2(state.microbe.y - state.boss.y, state.microbe.x - state.boss.x) + rand(-0.4,0.4); const spd = rand(2.4,4.2); state.boss.missiles.push({ x: state.boss.x, y: state.boss.y+30, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd }); }
+/* Boss Management */
+function spawnBoss(){
+  state.boss = { x: W/2, y: -60, active: true, missiles: [], lastFire: performance.now() };
+  const entryInterval = setInterval(()=>{
+    state.boss.y += 4;
+    if(state.boss.y >= 70){
+      clearInterval(entryInterval);
+    }
+  }, 16);
+  setTimeout(()=>{ if(state.boss) state.boss = null; }, 12*1000);
+  for(let i=0;i<6;i++) fireBossMissile();
+  beep(220,0.12,'sawtooth',0.06);
+}
+function fireBossMissile(){
+  if(!state.boss) return;
+  const angle = Math.atan2(state.microbe.y - state.boss.y, state.microbe.x - state.boss.x) + rand(-0.4,0.4);
+  const spd = rand(2.4,4.2);
+  state.boss.missiles.push({ x: state.boss.x, y: state.boss.y+30, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd });
+}
 
-/* Evolution rules — NO modal popup for evolution now */
+/* Evolution rules */
 function applyEvolution(){
   const s = state.score;
   const prev = state.mutationStage;
@@ -360,16 +476,13 @@ function applyEvolution(){
   else if(s >= 100) state.mutationStage = 2;
   else if(s >= 40) state.mutationStage = 1;
   if(state.mutationStage !== prev){
-    // Removed modal popup here intentionally (no evolution modal)
-    // Keep a subtle non-modal visual if desired (we are NOT showing any popups)
-    // small buff
     state.microbe.speedMult = 1 + 0.08 * state.mutationStage;
     state.score += 3 * state.mutationStage;
   }
   updateHUD();
 }
 
-/* Quiz bank (microbiology) */
+/* Expanded Quiz Bank and No Repeats */
 const quizBank = [
   { q:"Which microorganism causes tuberculosis?", choices:["Streptococcus pyogenes","Mycobacterium tuberculosis","Escherichia coli"], a:1 },
   { q:"Which structure helps bacteria move?", choices:["Flagella","Capsule","Cell wall"], a:0 },
@@ -377,12 +490,28 @@ const quizBank = [
   { q:"Which biomolecule is an enzyme?", choices:["Carbohydrate","Protein","Lipid"], a:1 },
   { q:"Virus genetic material can be which of the following?", choices:["DNA only","RNA only","DNA or RNA"], a:2 },
   { q:"Gram-positive bacteria have a thick layer of what?", choices:["Peptidoglycan","Lipopolysaccharide","Phospholipid"], a:0 },
-  { q:"Which process increases bacterial genetic diversity by taking up DNA from environment?", choices:["Binary fission","Transformation","Transduction"], a:1 }
-];
+  { q:"Which process increases bacterial genetic diversity by taking up DNA from environment?", choices:["Binary fission","Transformation","Transduction"], a:1 },
 
-/* Show quiz modal, pause already set by caller */
+  { q:"What is the main function of ribosomes?", choices:["Protein synthesis","Energy production","Genetic replication"], a:0 },
+  { q:"Which microbe is used in yogurt production?", choices:["Lactobacillus","Salmonella","Clostridium"], a:0 },
+  { q:"What colors does Gram staining differentiate bacteria into?", choices:["Red and Blue","Purple and Pink","Yellow and Green"], a:1 },
+  { q:"Which vitamin is produced by some bacteria in the human gut?", choices:["Vitamin C","Vitamin B12","Vitamin D"], a:1 },
+  { q:"Which microorganism causes malaria?", choices:["Plasmodium","Trypanosoma","Giardia"], a:0 },
+  { q:"Antibiotics are effective against which type of pathogens?", choices:["Bacteria","Viruses","Fungi"], a:0 }
+];
+let askedQuestions = [];
+
 function showQuizModal(){
-  const q = quizBank[Math.floor(Math.random()*quizBank.length)];
+  if(askedQuestions.length === quizBank.length){
+    askedQuestions = []; // reset asked questions
+  }
+  let qIndex;
+  do {
+    qIndex = Math.floor(Math.random() * quizBank.length);
+  } while(askedQuestions.includes(qIndex));
+  askedQuestions.push(qIndex);
+
+  const q = quizBank[qIndex];
   document.getElementById('quizQ').textContent = "Quick Quiz:";
   document.getElementById('quizText').textContent = q.q;
   const container = document.getElementById('quizChoices');
@@ -395,7 +524,6 @@ function showQuizModal(){
       document.getElementById('quizModal').style.display = 'none';
       state.quizActive = false;
       state.paused = false; // resume play
-      // correct?
       if(idx === q.a){
         state.score += SETTINGS.quizBonus;
         spawnParticle(state.microbe.x, state.microbe.y, "+" + SETTINGS.quizBonus, "#ffde59", 80);
@@ -411,25 +539,41 @@ function showQuizModal(){
   document.getElementById('quizModal').style.display = 'block';
 }
 
-/* Small compatibility function (kept) */
-function checkQuizTrigger(){}
+/* HUD Updates */
+function updateHUD(){
+  document.getElementById('score').textContent = Math.max(0, state.score);
+  document.getElementById('streak').textContent = state.streak;
+  document.getElementById('stageName').textContent = MUTATIONS[state.mutationStage].name;
+  document.getElementById('healthDisplay').innerHTML = heartString(state.health);
+}
 
-/* HUD updates */
-function updateHUD(){ document.getElementById('score').textContent = Math.max(0, state.score); document.getElementById('streak').textContent = state.streak; document.getElementById('stageName').textContent = MUTATIONS[state.mutationStage].name; document.getElementById('healthDisplay').innerHTML = heartString(state.health); }
-
-/* Input handling */
+/* Input Handling */
 const keys = {};
-window.addEventListener('keydown', (e)=>{ keys[e.key] = true; if(e.key === ' '){ if(!state.running){ ensureAudio(); startGame(); hideIntro(); } e.preventDefault(); }});
+window.addEventListener('keydown', (e)=>{
+  keys[e.key] = true;
+  if(e.key === ' '){
+    if(!state.running){
+      ensureAudio(); startGame(); hideIntro();
+    }
+    e.preventDefault();
+  }
+});
 window.addEventListener('keyup', (e)=>{ keys[e.key] = false; });
 
-/* Controls wiring */
+/* Controls Wiring */
 document.getElementById('startBtn').addEventListener('click', ()=>{ ensureAudio(); startGame(); hideIntro(); });
-document.getElementById('pauseBtn').addEventListener('click', ()=>{ state.paused = !state.paused; document.getElementById('pauseBtn').textContent = state.paused ? "Resume" : "Pause"; });
+document.getElementById('pauseBtn').addEventListener('click', ()=>{
+  state.paused = !state.paused;
+  document.getElementById('pauseBtn').textContent = state.paused ? "Resume" : "Pause";
+});
 document.getElementById('resetBtn').addEventListener('click', resetGame);
 document.getElementById('introStart').addEventListener('click', ()=>{ ensureAudio(); startGame(); hideIntro(); });
 document.getElementById('introDemo').addEventListener('click', ()=>{ hideIntro(); /* preview only */ });
 
-function hideIntro(){ document.getElementById('introOverlay').style.display = 'none'; document.getElementById('introOverlay').setAttribute('aria-hidden','true'); }
+function hideIntro(){
+  document.getElementById('introOverlay').style.display = 'none';
+  document.getElementById('introOverlay').setAttribute('aria-hidden','true');
+}
 
 /* Start / Reset / End */
 function startGame(){
@@ -446,20 +590,34 @@ function resetGame(){
   for(let i=0;i<6;i++) spawnNutrient();
   updateHUD(); render();
 }
-function endGame(){ state.running = false; beep(220,0.14,'sine',0.08); setTimeout(()=>{ alert(`💀 Your microbe died!\nScore: ${state.score}\nStage: ${MUTATIONS[state.mutationStage].name}`); resetGame(); }, 60); }
+function endGame(){
+  state.running = false; beep(220,0.14,'sine',0.08);
+  setTimeout(()=>{
+    alert(`💀 Your microbe died!\nScore: ${state.score}\nStage: ${MUTATIONS[state.mutationStage].name}`);
+    resetGame();
+  }, 60);
+}
 
 /* initial content */
 for(let i=0;i<6;i++) spawnNutrient();
 render();
 
 /* Render preview */
-function render(){ ctx.clearRect(0,0,W,H); drawNeonGrid(); for(const n of state.nutrients) drawNutrient(n); for(const p of state.powerups) drawPowerup(p); for(const a of state.antibiotics) drawAntibiotic(a); drawMicrobe(state.microbe); }
+function render(){
+  ctx.clearRect(0,0,W,H);
+  drawNeonGrid();
+  for(const n of state.nutrients) drawNutrient(n);
+  for(const p of state.powerups) drawPowerup(p);
+  for(const a of state.antibiotics) drawAntibiotic(a);
+  drawMicrobe(state.microbe);
+}
 
-/* Init HUD + show intro */
+/* Small stub for quiz trigger, logic handled in mainLoop */
+function checkQuizTrigger(){}
+
 updateHUD();
 document.getElementById('introOverlay').style.display = 'flex';
 document.getElementById('introOverlay').setAttribute('aria-hidden','false');
-
 </script>
 </body>
 </html>
